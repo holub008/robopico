@@ -38,6 +38,7 @@ from sklearn.preprocessing import normalize
 import data as rpd
 from ml.classifier import LinearClassifier
 from data.drugbank import Drugbank
+from ml.text.tokenizer import nlp
 
 
 class PICORobot:
@@ -104,15 +105,11 @@ class PICORobot:
     
         return out
 
-    def pdf_annotate(self, data):
-        doc_text = data.get("parsed_text")
-        if not doc_text:
-            # we've got to know the text at least..
-            return data
-
-        structured_data = self.annotate(doc_text)
-        data.ml["pico_text"] = structured_data
-        return data
+    # TODO rename methods
+    # TODO kholub: I YOLOed this code - not sure what preprocessing real robotreviewer does to the text, besides `nlp` (see prior 'parsed_text' attribute)
+    def pdf_annotate(self, full_text):
+        doc_text = nlp(full_text)
+        return self.annotate(doc_text)
 
     def annotate(self, doc_text, top_k=3, min_k=1, alpha=.7):
 

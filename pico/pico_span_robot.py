@@ -67,26 +67,24 @@ class PICOSpanRobot:
                 annotations.append(self.annotate({"title": article['parsed_ti'], "abstract": article['parsed_ab']}, get_berts=get_berts, get_meshes=True))
         return annotations
 
-    def pdf_annotate(self, data):
-        if data.get("abstract") is not None and data.get("title") is not None:
-            ti = tokenizer.nlp(data["title"])
-            ab = tokenizer.nlp(data["abstract"])
+    # TODO: method naming
+    def pdf_annotate(self, title, abstract):
+        ti = tokenizer.nlp(title)
+        ab = tokenizer.nlp(abstract)
         # TODO kholub probably don't even want to support this
-        elif data.get("parsed_text") is not None:
+        if False:
             # then just use the start of the document
             TI_LEN = 30
             AB_LEN = 500
             # best guesses based on sample of RCT abstracts + aiming for 95% centile
             ti = tokenizer.nlp(data['parsed_text'][:TI_LEN].string)
             ab = tokenizer.nlp(data['parsed_text'][:AB_LEN].string)
-        else:
-            # else can't proceed
-            return data
 
         data.ml["pico_span"] = self.annotate({"title": ti, "abstract": ab})
 
         return data
 
+    # TODO: method naming
     def annotate(self, article, get_berts=True, get_meshes=True):
         """
         Annotate abstract of clinical trial report
