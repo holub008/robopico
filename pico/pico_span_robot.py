@@ -11,11 +11,11 @@ literature": https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6174533/.
 import string
 import os
 
-from ner_model import NERModel
-from ner_config import Config
-import tokenizer
-import minimap
-import schwartz_hearst
+from ml.ner.ner_model import NERModel
+from ml.ner.ner_config import Config
+import ml.text.tokenizer as tokenizer
+import ml.text.minimap as minimap
+import ml.text.schwartz_hearst as schwartz_hearst
 import data as rpd
 from itertools import chain
 # from bert_serving.client import BertClient

@@ -1,4 +1,4 @@
-from tokenizer import nlp
+from ml.text.tokenizer import nlp
 import os
 import data as rpd
 import pickle

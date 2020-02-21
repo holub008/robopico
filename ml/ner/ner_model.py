@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-from ner_data_utils import pad_sequences
-from ner_base_model import BaseModel
+from ml.ner.ner_data_utils import pad_sequences
+from ml.ner.ner_base_model import BaseModel
 
 
 class NERModel(BaseModel):

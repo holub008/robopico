@@ -36,8 +36,8 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import normalize
 
 import data as rpd
-from classifier import LinearClassifier
-from drugbank import Drugbank
+from ml.classifier import LinearClassifier
+from data.drugbank import Drugbank
 
 
 class PICORobot:

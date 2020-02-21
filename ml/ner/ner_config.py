@@ -1,6 +1,6 @@
 import os
 import data as rpd
-from ner_data_utils import get_trimmed_glove_vectors, load_vocab, get_processing_word
+from ml.ner.ner_data_utils import get_trimmed_glove_vectors, load_vocab, get_processing_word
 
 
 class Config:
