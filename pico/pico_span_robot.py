@@ -56,36 +56,13 @@ class PICOSpanRobot:
         self.model.restore_session(os.path.join(rpd.DATA_ROOT, "pico_spans/model.weights/"))
         # self.bert = BertClient()
 
-    def api_annotate(self, articles, get_berts=True, get_meshes=True):
-        if not (all(('parsed_ab' in article for article in articles)) and all(('parsed_ti' in article for article in articles))):
-            raise Exception('PICO span model requires a title and abstract to be able to complete annotation')
-        annotations = []
-        for article in articles:
-            if article.get('skip_annotation'):
-                annotations.append([])
-            else:
-                annotations.append(self.annotate({"title": article['parsed_ti'], "abstract": article['parsed_ab']}, get_berts=get_berts, get_meshes=True))
-        return annotations
-
-    # TODO: method naming
-    def pdf_annotate(self, title, abstract):
+    def annotate(self, title, abstract):
         ti = tokenizer.nlp(title)
         ab = tokenizer.nlp(abstract)
-        # TODO kholub probably don't even want to support this
-        if False:
-            # then just use the start of the document
-            TI_LEN = 30
-            AB_LEN = 500
-            # best guesses based on sample of RCT abstracts + aiming for 95% centile
-            ti = tokenizer.nlp(data['parsed_text'][:TI_LEN].string)
-            ab = tokenizer.nlp(data['parsed_text'][:AB_LEN].string)
 
-        data.ml["pico_span"] = self.annotate({"title": ti, "abstract": ab})
+        return self._annotate({"title": ti, "abstract": ab})
 
-        return data
-
-    # TODO: method naming
-    def annotate(self, article, get_berts=True, get_meshes=True):
+    def _annotate(self, article, get_berts=True, get_meshes=True):
         """
         Annotate abstract of clinical trial report
         """
@@ -119,42 +96,12 @@ class PICOSpanRobot:
         for e in out:
             out[e] = cleanup(out[e])
 
-        # TODO kholub: I'm skipping this for now, to avoid the BERT dependency (don't want an external service)
-        # and, this usage appears to be for auxiliary purposes (ie downstream usage of embedded PICO elements)
-        # however, it may be useful to add in general, since things like the punchline robot require it
-        """
-        if get_berts:
-            for k in ['population', 'interventions', 'outcomes']:
-                bert_out_key = "{}_berts".format(k)
-
-                bert_q = []
-                for r in out[k]:
-                    if r.strip() and len(r) > 5:
-                        bert_q.append(r.strip())
-
-                if len(bert_q) == 0:
-                    out[bert_out_key] = []
-                else:
-                    out[bert_out_key] = [r.tolist() for r in self.bert.encode(bert_q)]
-        """
-
         if get_meshes:
             abbrev_dict = schwartz_hearst.extract_abbreviation_definition_pairs(doc_text=article['abstract'].text)
             for k in ['population', 'interventions', 'outcomes']:
                 out[f"{k}_mesh"] = minimap.get_unique_terms(out[k], abbrevs=abbrev_dict)
 
         return out
-
-    @staticmethod
-    def get_marginalia(data):
-        """
-        Get marginalia formatted for Spa from structured data
-        """
-        marginalia = [{"type": "PICO text from abstracts",
-                      "title": "PICO characteristics",
-                      "annotations": [],
-                      "description":  data["ml"]["pico_span"]}]
-        return marginalia
 
 
 if __name__ == '__main__':

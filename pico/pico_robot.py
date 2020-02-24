@@ -77,41 +77,11 @@ class PICORobot:
         self.top_k = top_k
         self.min_k = min_k
 
-    def api_annotate(self, articles):
-        if not all(('parsed_fullText' in article for article in articles)):
-            raise Exception('PICO model requires full text to be able to complete annotation')
-
-        annotations = []
-        for article in articles:
-            if article.get('skip_annotation'):
-                annotations.append([])
-            else:
-                annotations.append(self.annotate(article['parsed_fullText']))
-
-        # reformat annotations to API formatting
-        api_domain_titles = {
-            'Population': 'participants',
-            'Intervention': 'interventions',
-            'Outcomes': 'outcomes'}
-
-        out = []
-        for r in annotations:
-            row = {}
-            for b in r:
-                row[api_domain_titles[b['domain']]] = {
-                    "annotations": [{"text": an['content'], "start_index":an['position']} for an in b['annotations']]
-                }
-            out.append(row)
-    
-        return out
-
-    # TODO rename methods
-    # TODO kholub: I YOLOed this code - not sure what preprocessing real robotreviewer does to the text, besides `nlp` (see prior 'parsed_text' attribute)
-    def pdf_annotate(self, full_text):
+    def annotate(self, full_text):
         doc_text = nlp(full_text)
-        return self.annotate(doc_text)
+        return self._annotate(doc_text)
 
-    def annotate(self, doc_text, top_k=3, min_k=1, alpha=.7):
+    def _annotate(self, doc_text, top_k=3, min_k=1, alpha=.7):
 
         """
         Annotate full text of clinical trial report
@@ -178,20 +148,6 @@ class PICORobot:
             sentence_quintiles = [{"DocumentPositionQuintile%d" % (ii/quintile_cutoff): 1} for ii in range(num_sents)]
 
         return sentence_quintiles
-
-    @staticmethod
-    def get_marginalia(data):
-        """
-        Get marginalia formatted for Spa from structured data
-        """
-        marginalia = []
-        for row in data['pico_text']:
-            marginalia.append({
-                "type": "PICO",
-                "title": row['domain'],
-                "annotations": row['annotations']
-            })
-        return marginalia
 
 
 class PICOVectorizer:
