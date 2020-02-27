@@ -2,3 +2,6 @@
 .idea
 .venv/
 __pycache__/
+
+.Rhistory
+.Rproj.user
