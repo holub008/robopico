@@ -56,9 +56,13 @@ extract_data <- function(response) {
         xml_find_all('.//AbstractText') %>%
         xml_text() %>%
         paste(collapse=' ')
+      title <- article %>%
+        xml_find_first('.//ArticleTitle') %>%
+        xml_text()
       
       list(pmid = pmid,
-           abstract = abstract)
+           abstract = abstract,
+           title = title)
     })
   abstracts <- do.call(rbind.data.frame, c(abstract_list, list(stringsAsFactors=FALSE)))
   
@@ -114,6 +118,42 @@ fetch_abstracts_and_types <- function(pmids) {
   )
 }
 
+fetch_all_studies <- function(publication_types=c(
+  'Case Reports', # note these are all "Study Characteristics" in the nlm hierarchy
+  'Clinical Conference',
+  'Clinical Study',
+  'Comparative Study',
+  'Consensus Development Conference',
+  'Evaluation Study',
+  'Meta-Analysis',
+  'Multicenter Study',
+  'Scientific Integrity Review',
+  'Systematic Review',
+  'Twin Study',
+  'Validation Study'
+)) {
+  abstracts <- data.frame()
+  publication_types <- data.frame()
+  
+  for (publication_type in publication_types) {
+    serarch <- paste0('"', publication_type, '" [Publication Type]') 
+    search_results <- execute_search(search, step_size = 1e3, max_results = 5e5) # TODO, this should really be weighted according to freauency, to keep class priors accurate
+    studies <- fetch_abstracts_and_types(search_results)
+    
+    abstracts <- rbind(abstracts, studies$abstracts, stringsAsFactors=FALSE)
+    publication_types <- rbind(publication_types, studies$publication_types, stringsAsFactors=FALSE)
+  }
+  
+  list(
+    abstracts = abstracts %>% distinct(pmid),
+    publication_types = publication_types %>% distinct(pmid, publication_type)
+  )
+}
+
+
+all_studies <- fetch_all_studies()
+
+#############
 search_results <- execute_search('"case reports" [Publication Type]', step_size = 1e3, max_results = 2e3)
 studies <- fetch_abstracts_and_types(search_results)
 
@@ -126,13 +166,3 @@ studies$publication_types %>%
   count(sort = T)
 
 
-ct_search_results <- execute_search('"clinical trial" [Publication Type]', step_size = 1e3, max_results = 2e3)
-ct_studies <- fetch_abstracts_and_types(ct_search_results)
-
-ct_studies$publication_types %>%
-  group_by(pmid) %>%
-  summarize(
-    study_types = paste(publication_type, collapse = ', ')
-  ) %>%
-  group_by(study_types) %>%
-  count(sort = T)
