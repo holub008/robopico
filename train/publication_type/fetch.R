@@ -34,9 +34,11 @@ execute_search <- function(term, step_size=1e4, max_results = 5e5) {
       '&retstart=', length(all_pmids)
     )
     
+
+    step_results <- parse_search_result_pmids(RETRY("GET", url, times=5))
+    
     Sys.sleep(.5)
     
-    step_results <- parse_search_result_pmids(GET(url))
     all_pmids <- c(all_pmids, step_results) 
     if (length(step_results) < step_size) {
       search_complete <- TRUE
@@ -107,10 +109,12 @@ fetch_abstracts_and_types <- function(pmids) {
       '&rettype=xml'
     )
     
-    response <- GET(url)
-    results <- extract_data(response)
+    response <- RETRY("GET", url, times=5)
+
     Sys.sleep(.5)
     
+    results <- extract_data(response)
+
     abstracts <- rbind(abstracts, results$abstracts, stringsAsFactors=FALSE)
     publication_types <- rbind(publication_types, results$publication_types, stringsAsFactors=FALSE)
   }
