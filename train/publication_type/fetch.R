@@ -2,6 +2,9 @@ library(httr)
 library(xml2)
 library(dplyr)
 
+# avoid http2 errors with libcurl / entrez
+httr::set_config(httr::config(http_version = 0))
+
 PUBMED_STUDY_SEARCH_ENDPOINT = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 PUBMED_STUDY_FETCH_ENDPOINT = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
