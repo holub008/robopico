@@ -119,42 +119,54 @@ fetch_abstracts_and_types <- function(pmids) {
 }
 
 fetch_all_studies <- function(publication_types=c(
-  'Case Reports', # note these are all "Study Characteristics" in the nlm hierarchy
-  'Clinical Conference',
-  'Clinical Study',
-  'Comparative Study',
-  'Consensus Development Conference',
-  'Evaluation Study',
-  'Meta-Analysis',
-  'Multicenter Study',
-  'Scientific Integrity Review',
-  'Systematic Review',
-  'Twin Study',
-  'Validation Study'
-)) {
+    'Case Reports', # note these are all "Study Characteristics" in the nlm hierarchy
+    'Clinical Conference',
+    'Clinical Study',
+    'Comparative Study',
+    'Consensus Development Conference',
+    'Evaluation Study',
+    'Meta-Analysis',
+    'Multicenter Study',
+    'Scientific Integrity Review',
+    'Systematic Review',
+    'Twin Study',
+    'Validation Study'
+  )) {
   abstracts <- data.frame()
-  publication_types <- data.frame()
+  publications <- data.frame()
   
-  for (publication_type in publication_types) {
-    serarch <- paste0('"', publication_type, '" [Publication Type]') 
-    search_results <- execute_search(search, step_size = 1e3, max_results = 5e5) # TODO, this should really be weighted according to freauency, to keep class priors accurate
-    studies <- fetch_abstracts_and_types(search_results)
-    
-    abstracts <- rbind(abstracts, studies$abstracts, stringsAsFactors=FALSE)
-    publication_types <- rbind(publication_types, studies$publication_types, stringsAsFactors=FALSE)
-  }
+  tryCatch({
+    for (publication_type in publication_types) {
+      search_term <- paste0('"', publication_type, '" [Publication Type]') 
+      search_results <- execute_search(search_term, step_size = 1e3, max_results = 5e5) # TODO, this should really be weighted according to freauency, to keep class priors accurate
+      studies <- fetch_abstracts_and_types(search_results)
+      
+      abstracts <- rbind(abstracts, studies$abstracts, stringsAsFactors=FALSE)
+      publications <- rbind(publications, studies$publication_types, stringsAsFactors=FALSE)
+    }
+  }, error=function(e){
+    print(paste0('Error, catching to write out intermediate results'))
+    print(e)
+  })
+
   
   list(
-    abstracts = abstracts %>% distinct(pmid),
-    publication_types = publication_types %>% distinct(pmid, publication_type)
+    abstracts = abstracts %>% distinct(pmid, .keep_all = TRUE),
+    publications = publications %>% distinct(pmid, publication_type, .keep_all = TRUE)
   )
 }
 
-
 all_studies <- fetch_all_studies()
 
+write.table(all_studies$abstracts, 'abstracts.csv',
+            sep=',', col.names = TRUE, row.names=FALSE)
+write.table(all_studies$publications, 'publications.csv',
+            sep=',', col.names = TRUE, row.names=FALSE)
+
+
 #############
-search_results <- execute_search('"case reports" [Publication Type]', step_size = 1e3, max_results = 2e3)
+"
+search_results <- execute_search('\"case reports\" [Publication Type]', step_size = 1e3, max_results = 2e3)
 studies <- fetch_abstracts_and_types(search_results)
 
 studies$publication_types %>%
@@ -164,5 +176,5 @@ studies$publication_types %>%
   ) %>%
   group_by(study_types) %>%
   count(sort = T)
-
+"
 
