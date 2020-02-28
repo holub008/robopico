@@ -93,12 +93,15 @@ extract_data <- function(response) {
 }
 
 
-fetch_abstracts_and_types <- function(pmids) {
+fetch_abstracts_and_types <- function(pmids, search_term) {
   abstracts <- data.frame()
   publication_types <- data.frame()
   
   step_size <- 100
   for (lower_ix in seq(1, length(pmids), by=step_size)) {
+    
+    print(paste0(search_term, ': ', as.character(lower_ix), ' / ', as.character(length(pmids))))
+    
     upper_ix <- min(length(pmids), (lower_ix + step_size - 1))
     
     url <- paste0(
@@ -118,6 +121,8 @@ fetch_abstracts_and_types <- function(pmids) {
     abstracts <- rbind(abstracts, results$abstracts, stringsAsFactors=FALSE)
     publication_types <- rbind(publication_types, results$publication_types, stringsAsFactors=FALSE)
   }
+  
+  abstracts$term <- search_term
   
   list(
     abstracts = abstracts,
@@ -146,7 +151,7 @@ fetch_all_studies <- function(publication_types=c(
     for (publication_type in publication_types) {
       search_term <- paste0('"', publication_type, '" [Publication Type]') 
       search_results <- execute_search(search_term, step_size = 1e3, max_results = 5e5) # TODO, this should really be weighted according to freauency, to keep class priors accurate
-      studies <- fetch_abstracts_and_types(search_results)
+      studies <- fetch_abstracts_and_types(search_results, search_term)
       
       abstracts <- rbind(abstracts, studies$abstracts, stringsAsFactors=FALSE)
       publications <- rbind(publications, studies$publication_types, stringsAsFactors=FALSE)
@@ -174,7 +179,7 @@ write.table(all_studies$publications, 'publications.csv',
 #############
 "
 search_results <- execute_search('\"case reports\" [Publication Type]', step_size = 1e3, max_results = 2e3)
-studies <- fetch_abstracts_and_types(search_results)
+studies <- fetch_abstracts_and_types(search_results, 'blah')
 
 studies$publication_types %>%
   group_by(pmid) %>%
