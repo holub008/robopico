@@ -1,9 +1,20 @@
 library(dplyr)
 library(tidytext)
 library(xgboost)
+library(readr)
 
-abstracts <- read.csv('./abstracts.csv', stringsAsFactors = FALSE)
-publication_types <- read.csv('./publications.csv', stringsAsFactors = FALSE)
+# note, r read.csv & read.table are incapable of reading files that they wrote (without fiddling with who knows what arguments) :(
+# read_delim finds a very small number problems in the csv, but seems really good (good enough)
+abstracts <-  read_delim(file="abstracts_all.csv", delim=',', escape_double=FALSE, escape_backslash=TRUE, quote="\"")
+publication_types <-  read_delim(file="publications_all.csv", delim=',', escape_double=FALSE, escape_backslash=TRUE, quote="\"")
+
+downsampled_abstracts <- abstracts %>%
+  sample_frac(.1)
+
+# downsampled_abstracts %>% write.table('abstracts_downsampled.csv', row.names=F, col.names = T, sep=',')
+downsampled_publications <- downsampled_abstracts %>%
+  select(pmid) %>%
+  inner_join(publication_types, on='pmid')
 
 resolve_publication_type <- function(pubs) {
   pubs %>%
