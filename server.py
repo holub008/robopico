@@ -3,11 +3,13 @@ import os
 
 from pico.pico_span_robot import PICOSpanRobot
 from pico.pico_robot import  PICORobot
+from study_type.study_type_robot import StudyTypeRobot
 
 app = Flask(__name__)
 
 PICO_TIAB_BOT = PICOSpanRobot()
 PICO_TEXT_BOT = PICORobot()
+STUDY_TYPE_BOT = StudyTypeRobot()
 
 
 def validate_list(x):
@@ -29,7 +31,10 @@ def get_pico():
         if validate_list(body['abstract']) and validate_list(body['title']) \
                 and len(body['title']) == len(body['abstract']):
             for title, abstract in zip(body["title"], body["abstract"]):
-                results.append(PICO_TIAB_BOT.annotate(abstract, title))
+                annotation = PICO_TIAB_BOT.annotate(abstract, title)
+                # TODO: it may be faster to batch this (internal to StudyTypeRobot)
+                annotation['study_type'] = STUDY_TYPE_BOT.annotate(abstract, title)
+                results.append(annotation)
         else:
             return jsonify({
                 "message": "'abstract' and 'title' must be lists of equal length"
@@ -37,7 +42,7 @@ def get_pico():
     elif 'full_text' in body:
         if validate_list(body['full_text']):
             for text in body['full_text']:
-                results.append(PICO_TEXT_BOT.annotate(body['full_text']))
+                results.append(PICO_TEXT_BOT.annotate(text))
         else:
             return jsonify({
                 "message": "'full_text' must be a list"
