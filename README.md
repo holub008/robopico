@@ -1,246 +1,178 @@
-This project is a fork of RobotReviewer, targetted at providing a simple API, no UI/website, and allowing abstract-only functionality.
+# robopico
 
-# RobotReviewer
-Automatic extraction of data from clinical trial reports
+This project is a fork of [RobotReviewer](https://github.com/ijmarshall/robotreviewer). Its main objective is to 
+provide a simple API around the core functionality RobotReviewer offers. 
 
-RobotReviewer is a system for providing automatic annotations from clinical trials (in PDF format). Currently, RobotReviewer provides data on the trial *PICO* characteristics (Population, Interventions/Comparators, and Outcomes), and also automatically assesses trials for likely biases using the Cochrane Risk of Bias tool.
+## Features
 
-You can cite the current version as [![DOI](https://zenodo.org/badge/63896496.svg)](https://zenodo.org/badge/latestdoi/63896496).
+* PI(C)O extraction: [Named-entity Recognition models](https://en.wikipedia.org/wiki/Named-entity_recognition) extract 
+Patient/Problem, Intervention, and Outcome entities from article abstracts.
+* Study Type prediction: Gradient boosted trees classify studies as RCTs, case reports, systematic reviews, and other 
+using article abstracts.
 
-We offer RobotReviewer free of charge, but we'd be most grateful if you would cite us if you use it. We're academics, and thrive on links and citations! Getting RobotReviewer widely used and cited helps us obtain the funding to maintain the project and make RobotReviewer better.
+Note that, while PICO extraction is based on peer reviewed work, study type prediction is unvetted. See 
+`train/publication_type` for methods.
 
-It also makes your methods transparent to your readers, and not least we'd love to see where RobotReviewer is used! :)
-
-## The easy way
-
-For most people, we encourage you to use RobotReviewer via [our website](https://robotreviewer.vortext.systems).
-
-No need to install anything, simply upload your PDFs, and RobotReviewer will automatically extract key data and present a summary table.
-
-![RobotReviewer web screenshot](rr.png)
-
-[RobotReviewer online](https://robotreviewer.vortext.systems)
-
-For those who are particularly technically minded, or have a pressing need to run the software on their own machines, read on...
-
-## Developers of systematic review software?
-
-RobotReviewer is open source and free to use under the GPL license, version 3.0 (see the LICENSE.txt file in this directory).
-
-We'd appreciate it if you would:
-
-1. Display the text, 'Risk of Bias automation by RobotReviewer ([how to cite](http://vortext.systems/robotreviewer))' on the same screen or webpage on which the RobotReviewer results (highlighted text or risk of bias judgements) are displayed.
-2. For web-based tools, the text 'how to cite' should link to our website `http://vortext.systems/robotreviewer`
-3. For desktop software, you should usually link to the same website. If this is not possible, you may alternately display the text and example citations from the 'How to cite RobotReviewer' section below.
-
-You can cite RobotReviewer as:
-
-Marshall IJ, Kuiper J, Banner E, Wallace BC. “Automating Biomedical Evidence Synthesis: RobotReviewer.” Proceedings of the Conference of the Association for Computational Linguistics (ACL). 2017 (July): 7–12.
-
-
-A BibTeX entry for LaTeX users is:
-
-@article{RobotReviewer2017,
-  title    = "Automating Biomedical Evidence Synthesis: {RobotReviewer}",
-  author   = "Marshall, Iain J and Kuiper, Jo{\"e}l and Banner, Edward and
-              Wallace, Byron C",
-  journal  = "Proceedings of the Conference of the Association for Computational Linguistics (ACL)",
-  volume   =  2017,
-  pages    = "7--12",
-  month    =  jul,
-  year     =  2017,
-}
-
-
-## Docker
-
-We maintain a working Dockerfile in the repo, which is usually the easiest way to install locally.
-
-First you should clone this repository, and download/decompress the SciBERT model file.
-```
-git clone https://github.com/ijmarshall/robotreviewer.git
-wget https://s3-us-west-2.amazonaws.com/ai2-s2-research/scibert/tensorflow_models/scibert_scivocab_uncased.tar.gz
-tar -zxf scibert_scivocab_uncased.tar.gz --directory robotreviewer/robotreviewer/data
+## Example
+```sh
+curl --header "Content-Type: application/json" --data '{"title": ["The AtRial Cardiopathy and Antithrombotic Drugs In prevention After cryptogenic stroke randomized trial: Rationale and methods."], "abstract": ["Recent data suggest that a thrombogenic atrial substrate can cause stroke in the absence of atrial fibrillation. Such an atrial cardiopathy may explain some proportion of cryptogenic strokes. The aim of the ARCADIA trial is to test the hypothesis that apixaban is superior to aspirin for the prevention of recurrent stroke in subjects with cryptogenic ischemic stroke and atrial cardiopathy. 1100 participants. Biomarker-driven, randomized, double-blind, active-control, phase 3 clinical trial conducted at 120 U.S. centers participating in NIH StrokeNet. Patients ≥ 45 years of age with embolic stroke of undetermined source and evidence of atrial cardiopathy, defined as ≥ 1 of the following markers: P-wave terminal force >5000 µV × ms in ECG lead V1, serum NT-proBNP > 250 pg/mL, and left atrial diameter index ≥ 3 cm/m2 on echocardiogram. Exclusion criteria include any atrial fibrillation, a definite indication or contraindication to antiplatelet or anticoagulant therapy, or a clinically significant bleeding diathesis. Intervention: Apixaban 5 mg twice daily versus aspirin 81 mg once daily. Analysis: Survival analysis and the log-rank test will be used to compare treatment groups according to the intention-to-treat principle, including participants who require open-label anticoagulation for newly detected atrial fibrillation. The primary efficacy outcome is recurrent stroke of any type. The primary safety outcomes are symptomatic intracranial hemorrhage and major hemorrhage other than intracranial hemorrhage. ARCADIA is the first trial to test whether anticoagulant therapy reduces stroke recurrence in patients with atrial cardiopathy but no known atrial fibrillation."]}' localhost:5050/pico
 ```
 
-Pull large files in the repository:
-```
-# if system doesn't have git lfs
-sudo apt-get git-lfs
+Results in:
 
-git lfs install
-```
-
-Create a config (may need hand edits) 
-```
-cp robotreviewer/config.json.example robotreviewer/config.json
-```
-
-Then - to build and run, from within the code directory run:
-```
-docker build . -t robotreviewer
-```
-
-If the build is successful, you can then start the website locally by running:
-
-```
-./start.sh
-```
-
-You can then access the website on any webbrowser on your local machine at: http://localhost:5050.
-
-To stop the websever, run:
-```
-docker stop robotreviewer
-```
-
-
-## Installation
-
-We have tested the installation on Ubuntu, and Mac OS which both work successfully with the following instructions. Windows does work in the end but with a lot of installation headaches!
-
-1. Ensure you have a working version of Python 3.6. We strongly recommend using Python from the [Anaconda Python distribution](https://www.anaconda.com/distribution/) for a quicker and more reliable experience.
-
-2. [Install git-lfs](https://git-lfs.github.com/) for managing the model file versions (on Mac: `brew install git-lfs`). NB! If you already have git lfs installed, make sure it's the most recent version, since older versions have not downloaded files properly.
-
-3. Get a copy of the RobotReviewer repo, and go into that directory
-    ```bash
-    git clone https://github.com/ijmarshall/robotreviewer.git
-    cd robotreviewer
-    ```
-
-4. Install the Python libraries that RobotReviewer needs. The most reliable way is through a conda environment. The following downloads the packages, and installs the required data.
-    ```bash
-    conda env create -f robotreviewer_env.yml
-    conda activate robotreviewer
-    python -m spacy download en
-    python -m nltk.downloader punkt stopwords
-    ```
-
-  You then should install tensorflow V 1.12.0, with or without GPU support depending on your preference:
-  ```bash
-  conda activate robotreviewer
-  pip install tensorflow==1.12.0 # OR
-  pip install tensorflow-gpu==1.12.0
-  ```
-
-5. Ensure `keras` is set to use `tensorflow` as its default backend. Steps on how to do this can be found [here](https://keras.io/backend/).
-
-6. This version of RobotReviewer requires Grobid, which in turn uses Java. Follow the instructions [here](https://grobid.readthedocs.io/en/latest/Install-Grobid/) to download and build it. This version of RobotReviewer has been tested with Grobid 0.5.1, but no longer works with 0.4 versions.
-
-7. Create the `robotreviewer/config.json` file and ensure it contains the path to the directory where you have installed Grobid. (RobotReviewer will start it automatically in a subprocess). Note that this should be the path to the entire (parent) Grobid directory, not the bin subfolder. An example of this file is provided in `robotreviewer/config.json.example` (it is only necessary to change the `grobid_path`).
-
-8. Also install `rabbitmq`. This can be [done via homebrew on OS X](https://www.rabbitmq.com/install-homebrew.html), or by alternative means documented [here](https://www.rabbitmq.com/download.html). Finally, install make sure [celery](http://www.celeryproject.org/install/) is installed and on your path. Note that this ships with Anaconda by default and will be found in the `$(anaconda-home)/bin/celery` dir by default.
-
-9. We now also make use of [BERT embeddings](https://arxiv.org/pdf/1810.04805.pdf), specifically [SciBERT](https://github.com/allenai/scibert). For this we use the [bert-as-service](https://github.com/hanxiao/bert-as-service). This needs to be running locally. 
-
-To do this, get the SciBERT model file:
-```bash
-wget https://s3-us-west-2.amazonaws.com/ai2-s2-research/scibert/tensorflow_models/scibert_scivocab_uncased.tar.gz
-```
-And (from the RobotReviewer base directory) decompress to the robotreviewer data folder:
-```bash
-tar -zxf scibert_scivocab_uncased.tar.gz --directory robotreviewer/data
-```
-
-
-## Running
-
-RobotReviewer requires a 'worker' process (which does the Machine Learning), and a webserver to be started. Ensure that you are within the conda environment (default name: robotreviewer) when running the following processes.
-
-First, be sure that rabbitmq-server is running. If you haven't set this to start on login, you can invoke manually:
-
-```rabbitmq-server```
-
-Then, to start the Machine Learning worker (using the GPU):
-
-```bash
-celery -A robotreviewer.ml_worker worker --loglevel=info --concurrency=1 --pool=solo
-```
-Alternatively, to start RobotReviewer using CPU only, use the following command:
-
-```bash
-env CUDA_VISIBLE_DEVICES=-1 celery -A robotreviewer.ml_worker worker --loglevel=info --concurrency=1 --pool=solo
-```
-
-Next, be sure that bert-as-a-service is running, and using the SciBERT weights:
-
-```bert-serving-start -model_dir=/Path/to/SciBERT-weights/```
-
-Finally, to start the webserver (on `localhost:5000`):
-
-```bash
-python -m robotreviewer
-```
-
-**NEW!** To start the server for the Swagger API, run:
-
-```bash
-REST_API=true python -m robotreviewer --rest
-```
-
-
-## Demonstration reports
-
-We have included example reports, with open access RCT PDFs to demonstrate RobotReviewer. These are saved in the default database, and can be accessed via the following links.
-
-Decision aids: `http://localhost:5000/#report/Tvg0-pHV2QBsYpJxE2KW-`
-Influenza vaccination: `http://localhost:5000/#report/_fzGUEvWAeRsqYSmNQbBq`
-Hypertension: `http://localhost:5000/#report/HBkzX1I3Uz_kZEQYeqXJf`
-
-
-## Rest API
-
-The big change in this version of RobotReviewer is that we now deal with *groups* of clinical trial reports, rather than one at a time. This is to allow RobotReviewer to synthesise the results of multiple trials.
-
-As a consequence, the API has become more sophisticated than previously and we will add further documentation about it here.
-
-In the meantime, the code for the API endpoints can be found in `/robotreviewer/app.py`.
-
-Some things remain simple; e.g., for an example of using RR to classify abstracts as RCTs (or not) see [this gist](https://gist.github.com/bwallace/beebf6d7bbacfbb91704f66c28dcc537).
-
-If you are interested in incorporating RobotReviewer into your own software, please [contact us](mailto:mail@ijmarshall.com) and we'd be pleased to assist.
-
-## Testing
-
-The following
-
-```bash
-python -m unittest
+```json
+[
+  {
+    "interventions": [
+      "Apixaban 5\u2009mg twice daily versus aspirin", 
+      "apixaban", 
+      "anticoagulant therapy", 
+      "aspirin", 
+      "Intervention"
+    ], 
+    "interventions_mesh": [
+      {
+        "cui": "C1831808", 
+        "mesh_term": "apixaban", 
+        "mesh_ui": "C522181"
+      }, 
+      {
+        "cui": "C0004057", 
+        "mesh_term": "Aspirin", 
+        "mesh_ui": "D001241"
+      }, 
+      {
+        "cui": "C0003280", 
+        "mesh_term": "Anticoagulants", 
+        "mesh_ui": "D000925"
+      }, 
+      {
+        "cui": "C0087111", 
+        "mesh_term": "Therapeutics", 
+        "mesh_ui": "D013812"
+      }
+    ], 
+    "outcomes": [
+      "stroke recurrence", 
+      "recurrent stroke of any type", 
+      "symptomatic intracranial hemorrhage and major hemorrhage other than intracranial hemorrhage"
+    ], 
+    "outcomes_mesh": [
+      {
+        "cui": "C0038454", 
+        "mesh_term": "Stroke", 
+        "mesh_ui": "D020521"
+      }, 
+      {
+        "cui": "C2825055", 
+        "mesh_term": "Recurrence", 
+        "mesh_ui": "D012008"
+      }, 
+      {
+        "cui": "C0151699", 
+        "mesh_term": "Intracranial Hemorrhages", 
+        "mesh_ui": "D020300"
+      }, 
+      {
+        "cui": "C0019080", 
+        "mesh_term": "Hemorrhage", 
+        "mesh_ui": "D006470"
+      }
+    ], 
+    "population": [
+      "120 U.S. centers participating in NIH StrokeNet", 
+      "participants who require open-label anticoagulation for newly detected atrial fibrillation", 
+      "1100 participants", 
+      "patients with atrial cardiopathy but no known atrial fibrillation", 
+      "subjects with cryptogenic ischemic stroke and atrial cardiopathy", 
+      "Patients\u2009\u2265\u200945 years of age with embolic stroke of undetermined source and evidence of atrial cardiopathy, defined as\u2009\u2265\u20091 of the following markers: P-wave terminal force >5000\u2009\u00b5V\u2009\u00d7\u2009ms in ECG lead V1, serum NT-proBNP\u2009>\u2009250\u2009pg/mL, and left atrial diameter index\u2009\u2265\u20093\u2009cm/m2 on echocardiogram"
+    ], 
+    "population_mesh": [
+      {
+        "cui": "C0004238", 
+        "mesh_term": "Atrial Fibrillation", 
+        "mesh_ui": "D001281"
+      }, 
+      {
+        "cui": "C0030705", 
+        "mesh_term": "Patient", 
+        "mesh_ui": "D010361"
+      }, 
+      {
+        "cui": "C0018799", 
+        "mesh_term": "Heart Diseases", 
+        "mesh_ui": "D006331"
+      }, 
+      {
+        "cui": "C0038454", 
+        "mesh_term": "Stroke", 
+        "mesh_ui": "D020521"
+      }, 
+      {
+        "cui": "C0001811", 
+        "mesh_term": "Aging", 
+        "mesh_ui": "D000375"
+      }, 
+      {
+        "cui": "C1623258", 
+        "mesh_term": "Electrocardiography", 
+        "mesh_ui": "D004562"
+      }, 
+      {
+        "cui": "C0023175", 
+        "mesh_term": "Lead", 
+        "mesh_ui": "D007854"
+      }, 
+      {
+        "cui": "C0229671", 
+        "mesh_term": "Serum", 
+        "mesh_ui": "D044967"
+      }, 
+      {
+        "cui": "C0754710", 
+        "mesh_term": "Amino-terminal pro-brain natriuretic peptide", 
+        "mesh_ui": "C109794"
+      }, 
+      {
+        "cui": "C0600653", 
+        "mesh_term": "Index", 
+        "mesh_ui": "D020481"
+      }, 
+      {
+        "cui": "C0013516", 
+        "mesh_term": "Echocardiography", 
+        "mesh_ui": "D004452"
+      }
+    ], 
+    "study_type": {
+      "Case Report": 0.00025277058011852205, 
+      "Other": 0.013372665271162987, 
+      "RCT": 0.9858561754226685, 
+      "Systematic Review": 0.0005183960893191397
+    }
+  }
+]
 ```
 
-will run the testing modules. These should be used to assure that changes made do not break or have an affect on the core of the code. If `Ran X tests in Ys` is displayed, the tests have completed successfully.
+## Deploying
 
-## Help
+### Development
 
-Feel free to contact us at [mail@ijmarshall.com](mailto:mail@ijmarshall.com) with any questions.
+After cloning the repository, install the project with:
+```sh
+pipenv install 
+```
 
-### Common Problems
+Start the server:
+```sh
+pipenv run python server.py
+```
+The server will be available at  `http://localhost:5050`- note startup time is 5-10 seconds, due to loading large models.
 
-##### Grobid isn't working properly
-Most likely the problem is that your path to Grobid in `robotreviewer/config.json` is incorrect. If your path uses a `~`, try using a path without one.
+### Production
 
-##### rabbitmq-server: command not found
-Often found on OS X. If you installed `rabbitmq` using Homebrew, running the command `brew services start rabbitmq` should work.
+Run the flask app behind a production grade server using WSGI. Gunicorn is the default option of this project
 
-
-## References
-
-1. Marshall, I. J., Kuiper, J., & Wallace, B. C. (2015). RobotReviewer: evaluation of a system for automatically assessing bias in clinical trials. Journal of the American Medical Informatics Association. [[doi]](http://dx.doi.org/10.1093/jamia/ocv044)
-2. Zhang Y, Marshall I. J., & Wallace, B. C. (2016) Rationale-Augmented Convolutional Neural Networks for Text Classification. Conference on Empirical Methods on Natural Language Processing. [[preprint]](https://arxiv.org/pdf/1605.04469v2.pdf)
-2. Marshall, I., Kuiper, J., & Wallace, B. (2015). Automating Risk of Bias Assessment for Clinical Trials. IEEE Journal of Biomedical and Health Informatics. [[doi]](http://dx.doi.org/10.1109/JBHI.2015.2431314)
-3. Kuiper, J., Marshall, I. J., Wallace, B. C., & Swertz, M. A. (2014). Spá: A Web-Based Viewer for Text Mining in Evidence Based Medicine. In Proceedings of the European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases (ECML-PKDD 2014) (Vol. 8726, pp. 452–455). Springer Berlin Heidelberg. [[doi]](http://dx.doi.org/10.1007/978-3-662-44845-8_33)
-4. Marshall, I. J., Kuiper, J., & Wallace, B. C. (2014). Automating Risk of Bias Assessment for Clinical Trials. In Proceedings of the ACM Conference on Bioinformatics, Computational Biology, and Health Informatics (ACM-BCB) (pp. 88–95). ACM. [[doi]](http://dx.doi.org/10.1145/2649387.2649406)
-
-Copyright (c) 2018 Iain Marshall, Joël Kuiper, and Byron Wallace
-
-## Acknowledgements
-
-We are enormously grateful to our many collaborators, whose work is incorporated in RobotReviewer. These include Ani Nenkova and Zachary Ives at UPenn, Benjamin Nye at Northeastern, James Thomas at the EPPI Centre, UCL, and Anna Noel-Storr at the University of Oxford and Cochrane Dementia group. 
-!e would like to express our gratitude to the Cochrane Collaboration, and especially to David Tovey and Chris Mavergames among many others who facilitated getting access to data, and made many useful introductions. We are hugely appreciative to the volunteers of the Cochrane Crowd, and to Anna Noel-Storr and Gordon Dooley, whose efforts and data we depend on to build our machine learning systems for identifying RCTs.
-
-We include an [implimentation](https://github.com/philgooch/abbreviation-extraction) of the [Schwartz-Hearst algorithm](https://psb.stanford.edu/psb-online/proceedings/psb03/schwartz.pdf) in Python by Vincent Van Asch and Phil Gooch, which is released under the MIT licence.
-
-## Support
-
-This work is supported by: National Institutes of Health (NIH) under the National Library of Medicine, grant R01-LM012086-01A1, "Semi-Automating Data Extraction for Systematic Reviews", and by NIH grant 5UH2CA203711-02, "Crowdsourcing Mark-up of the Medical Literature to Support Evidence-Based Medicine and Develop Automated Annotation Capabilities", and the UK Medical Research Council (MRC), through its Skills Development Fellowship program, grant MR/N015185/1
+```sh
+venv/bin/gunicorn --bind localhost:8000 wsgi:app —-timeout 5000
+```
