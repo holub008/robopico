@@ -1,0 +1,8 @@
+data/drugbank/*.pck filter=lfs diff=lfs merge=lfs -text
+data/minimap/*.pck filter=lfs diff=lfs merge=lfs -text
+data/pico/*.npz filter=lfs diff=lfs merge=lfs -text
+data/pico/PICO_embeddings/abstracts.p filter=lfs diff=lfs merge=lfs -text
+data/pico/PICO_embeddings/interventions/weights.h5 filter=lfs diff=lfs merge=lfs -text
+data/pico/PICO_embeddings/outcomes/weights.h5 filter=lfs diff=lfs merge=lfs -text
+data/pico/PICO_embeddings/populations/weights.h5 filter=lfs diff=lfs merge=lfs -text
+data/pico_spans/embeddings.200d.trimmed.npz filter=lfs diff=lfs merge=lfs -text
