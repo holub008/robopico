@@ -97,7 +97,7 @@ fetch_abstracts_and_types <- function(pmids, search_term) {
   abstracts <- data.frame()
   publication_types <- data.frame()
   
-  step_size <- 100
+  step_size <- 250
   for (lower_ix in seq(1, length(pmids), by=step_size)) {
     
     print(paste0(search_term, ': ', as.character(lower_ix), ' / ', as.character(length(pmids))))
@@ -168,25 +168,24 @@ fetch_all_studies <- function(publication_types=c(
   )
 }
 
-all_studies <- fetch_all_studies()
+fetch_all_recent_studies <- function(max_results=5e5) {
+  search_term <- '"last 1 years"[PDat]'
+  search_results <- execute_search(search_term, step_size = 1e3, max_results = max_results)
+  studies <- fetch_abstracts_and_types(search_results, search_term)
+  
+  
+  list(abstracts=studies$abstracts, publications=studies$publication_types)
+}
 
+#all_studies <- fetch_all_studies()
+"
 write.table(all_studies$abstracts, 'abstracts.csv',
             sep=',', col.names = TRUE, row.names=FALSE)
 write.table(all_studies$publications, 'publications.csv',
             sep=',', col.names = TRUE, row.names=FALSE)
-
-
-#############
 "
-search_results <- execute_search('\"case reports\" [Publication Type]', step_size = 1e3, max_results = 2e3)
-studies <- fetch_abstracts_and_types(search_results, 'blah')
 
-studies$publication_types %>%
-  group_by(pmid) %>%
-  summarize(
-    study_types = paste(publication_type, collapse = ', ')
-  ) %>%
-  group_by(study_types) %>%
-  count(sort = T)
-"
+recent_studies <- fetch_all_recent_studies(5e3)
+write.csv(recent_studies$abstracts, 'abstracts.csv', row.names=FALSE)
+write.csv(recent_studies$publications, 'publications.csv',row.names=FALSE)
 
