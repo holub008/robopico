@@ -58,20 +58,14 @@ def get_labelled_data(abstracts, publications):
 
 
 def get_data_from_file():
-    # rs = randomly sampled, across all publications, regardless of tagging
-    abstracts_rs = pd.read_csv('train/publication_type/abstracts.csv')
-    abstracts_rs['source'] = 'rs'
     # ptt = publication type tagged - i.e. NLM put some tag on the publication
-    abstracts_ptt = pd.read_csv('train/data_archive/abstracts_all.csv', escapechar='\\',  error_bad_lines=False,
-                                nrows=500000)
-    abstracts_ptt['source'] = 'ptt'
+    abstracts_ptt = pd.read_csv('train/data_archive/abstracts_all.csv', escapechar='\\',  error_bad_lines=False)
 
-    abstracts = pd.concat([abstracts_ptt, abstracts_rs]).sample(frac=1).reset_index(drop=True)
+    abstracts = abstracts_ptt.(frac=1).reset_index(drop=True)
     abstracts = abstracts[~pd.isnull(abstracts['abstract']) & (abstracts['abstract'] != '') & ~pd.isnull(abstracts['title'])]
 
-    publication_types_rs = pd.read_csv('train/publication_type/publications.csv')
     publication_types_ptt = pd.read_csv('train/data_archive/publications_all.csv')
-    publication_types = pd.concat([publication_types_ptt, publication_types_rs]).sample(frac=1).reset_index(drop=True)
+    publication_types = publication_types_ptt.sample(frac=1).reset_index(drop=True)
 
     return abstracts, publication_types
 
@@ -170,3 +164,4 @@ with open('data/study_type/abstract_vectorizer.pickle', 'wb') as out:
 
 with open('data/study_type/label_encoder.pickle', 'wb') as out:
     pickle.dump(label_encoder, out)
+
