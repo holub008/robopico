@@ -53,15 +53,15 @@ def get_labelled_data(abstracts, publications):
     train_data = matched_data[mask]
     test_data = matched_data[~mask]
 
-    return train_data[['pmid', 'source', 'title', 'abstract']], train_data['label'], train_data['is_clinical'], \
-        test_data[['pmid', 'source', 'title', 'abstract']], test_data['label'], test_data['is_clinical']
+    return train_data[['pmid', 'title', 'abstract']], train_data['label'], train_data['is_clinical'], \
+        test_data[['pmid', 'title', 'abstract']], test_data['label'], test_data['is_clinical']
 
 
 def get_data_from_file():
     # ptt = publication type tagged - i.e. NLM put some tag on the publication
     abstracts_ptt = pd.read_csv('train/data_archive/abstracts_all.csv', escapechar='\\',  error_bad_lines=False)
 
-    abstracts = abstracts_ptt.(frac=1).reset_index(drop=True)
+    abstracts = abstracts_ptt.sample(frac=1).reset_index(drop=True)
     abstracts = abstracts[~pd.isnull(abstracts['abstract']) & (abstracts['abstract'] != '') & ~pd.isnull(abstracts['title'])]
 
     publication_types_ptt = pd.read_csv('train/data_archive/publications_all.csv')
@@ -76,12 +76,17 @@ model_data_text_train, labels_text_train, is_clinical_train,\
     model_data_text_test, labels_text_test, is_clinical_test = get_labelled_data(abstracts, publication_types)
 
 abstract_vectorizer = CountVectorizer(stop_words='english', ngram_range=[1, 2],
-                             max_features=20000, min_df=.001)
+                             max_features=10000, min_df=.001)
 title_vectorizer = CountVectorizer(stop_words='english', ngram_range=[1, 2],
-                             max_features=20000, min_df=.001)
+                             max_features=10000, min_df=.001)
 
 abstract_tf_train = abstract_vectorizer.fit_transform(model_data_text_train['abstract'])
 title_tf_train = title_vectorizer.fit_transform(model_data_text_train['title'])
+
+# note: this attribute gets enormous, but is not used to transform
+# https://github.com/scikit-learn/scikit-learn/issues/4032
+delattr(abstract_vectorizer, 'stop_words_')
+delattr(title_vectorizer, 'stop_words_')
 
 model_data_train = hstack((abstract_tf_train, title_tf_train))
 label_encoder = LabelEncoder()
@@ -109,7 +114,7 @@ fold_results = xgb.cv(
     params=params,
     dtrain=dtrain,
     nfold=5,
-    num_boost_round=params_clinical['n_estimators']
+    num_boost_round=params['n_estimators']
 )
 
 fold_results_clinical = xgb.cv(
@@ -152,13 +157,9 @@ roc_auc_score(is_clinical_test, preds_clinical)
 model.save_model("data/study_type/model.json")
 clinical_model.save_model("data/study_type/clinical_model.json")
 
-# note: this attribute gets enormous, but is not used to transform
-# https://github.com/scikit-learn/scikit-learn/issues/4032
-delattr(title_vectorizer, 'stop_words_')
 with open('data/study_type/title_vectorizer.pickle', 'wb') as out:
     pickle.dump(title_vectorizer, out)
 
-delattr(abstract_vectorizer, 'stop_words_')
 with open('data/study_type/abstract_vectorizer.pickle', 'wb') as out:
     pickle.dump(abstract_vectorizer, out)
 
