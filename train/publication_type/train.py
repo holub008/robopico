@@ -77,7 +77,6 @@ def get_data_from_file():
 
 
 abstracts, publication_types = get_data_from_file()
-abstracts = abstracts.iloc[1:10000]
 
 model_data_text_train, labels_text_train, is_clinical_train,\
     model_data_text_test, labels_text_test, is_clinical_test = get_labelled_data(abstracts, publication_types)
@@ -98,9 +97,9 @@ dtrain = xgb.DMatrix(model_data_train, labels_train)
 dtrain_clinical = xgb.DMatrix(model_data_train, is_clinical_train)
 
 params = {
-    'n_estimators': 100,
+    'n_estimators': 25,
     'objective': 'multi:softprob',
-    'max_depth': 3,
+    'max_depth': 5,
     'num_class': len(label_encoder.classes_),
     'eval_metric': 'merror'
 }
@@ -108,7 +107,7 @@ params = {
 params_clinical = {
     'n_estimators': 100,
     'objective': 'binary:logistic',
-    'max_depth': 3,
+    'max_depth': 5,
     'eval_metric': 'auc'
 }
 
@@ -116,12 +115,14 @@ fold_results = xgb.cv(
     params=params,
     dtrain=dtrain,
     nfold=5,
+    num_boost_round=params_clinical['n_estimators']
 )
 
 fold_results_clinical = xgb.cv(
     params=params_clinical,
     dtrain=dtrain_clinical,
     nfold=5,
+    num_boost_round=params_clinical['n_estimators']
 )
 
 fold_results.mean(axis=0)
