@@ -185,7 +185,7 @@ write.table(all_studies$publications, 'publications.csv',
             sep=',', col.names = TRUE, row.names=FALSE)
 "
 
-recent_studies <- fetch_all_recent_studies(5e3)
+recent_studies <- fetch_all_recent_studies(1e5)
 write.csv(recent_studies$abstracts, 'abstracts.csv', row.names=FALSE)
 write.csv(recent_studies$publications, 'publications.csv',row.names=FALSE)
 

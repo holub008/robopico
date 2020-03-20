@@ -48,7 +48,9 @@ def get_pico():
             for title, abstract in zip(body["title"], body["abstract"]):
                 annotation = PICO_TIAB_BOT.annotate(abstract, title)
                 # TODO: it may be faster to batch this (internal to StudyTypeRobot)
-                annotation['study_type'] = STUDY_TYPE_BOT.annotate(abstract, title)
+                study_type_predictions, is_clinical = STUDY_TYPE_BOT.annotate(abstract, title)
+                annotation['study_type'] = study_type_predictions
+                annotation['is_clinical'] = is_clinical
                 results.append(annotation)
         else:
             return jsonify({

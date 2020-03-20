@@ -6,8 +6,11 @@ from scipy.sparse import hstack
 
 class StudyTypeRobot:
     def __init__(self):
-        self._model = xgb.Booster()
-        self._model.load_model(data.get_data("study_type/model.json"))
+        self._type_model = xgb.Booster()
+        self._type_model.load_model(data.get_data("study_type/model.json"))
+
+        self._clinical_model = xgb.Booster()
+        self._clinical_model.load_model(data.get_data("study_type/clinical_model.json"))
 
         with open(data.get_data("study_type/label_encoder.pickle"), 'rb') as fh:
             self._label_encoder = pickle.load(fh)
@@ -19,11 +22,9 @@ class StudyTypeRobot:
             self._abstract_vectorizer = pickle.load(fh)
 
     def annotate(self, abstract, title):
-        predictions = self._annotate([abstract], [title])[0]
-        labels = self._label_encoder.inverse_transform(range(len(predictions)))
-        return {
-            labels[ix]: predictions[ix].item() for ix in range(len(predictions))
-        }
+        type_predictions, clinical_prediction = self._annotate([abstract], [title])
+        labels = self._label_encoder.inverse_transform(range(len(type_predictions)))
+        return {labels[ix]: type_predictions[ix].item() for ix in range(len(type_predictions))}, clinical_prediction.item()
 
     def _annotate(self, abstracts, titles):
         abstract_tf = self._abstract_vectorizer.transform(abstracts)
@@ -31,4 +32,4 @@ class StudyTypeRobot:
 
         model_data = xgb.DMatrix(hstack((abstract_tf, title_tf)))
 
-        return self._model.predict(model_data)
+        return self._type_model.predict(model_data)[0], self._clinical_model.predict(model_data)[0]
