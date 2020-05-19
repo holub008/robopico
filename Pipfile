@@ -17,6 +17,3 @@ tensorflow = "~=1.15"
 flask = "*"
 xgboost = "*"
 gunicorn = "*"
-
-[requires]
-python_version = "3.7"
