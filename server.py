@@ -15,7 +15,7 @@ STUDY_TYPE_BOT = StudyTypeRobot()
 MAX_REQUEST_SIZE = 500
 
 
-def validate_length(*argv):
+def _validate_length(*argv):
     if len(argv) == 0:
         return False
 
@@ -32,6 +32,20 @@ def validate_length(*argv):
         return all_equal_length and n <= MAX_REQUEST_SIZE
 
 
+def _get_pico_for_tiab(titles, abstracts):
+    results = []
+
+    for title, abstract in zip(titles, abstracts):
+        annotation = PICO_TIAB_BOT.annotate(abstract, title)
+        # TODO: it may be faster to batch this (internal to StudyTypeRobot)
+        study_type_predictions, is_clinical = STUDY_TYPE_BOT.annotate(abstract, title)
+        annotation['study_type'] = study_type_predictions
+        annotation['is_clinical'] = is_clinical
+        results.append(annotation)
+
+    return results
+
+
 @app.route('/pico', methods=['POST'])
 def get_pico():
     body = request.get_json()
@@ -42,22 +56,15 @@ def get_pico():
         }), 400
 
     results = []
-
     if 'abstract' in body and 'title' in body:
-        if validate_length(body['title'], body['abstract']):
-            for title, abstract in zip(body["title"], body["abstract"]):
-                annotation = PICO_TIAB_BOT.annotate(abstract, title)
-                # TODO: it may be faster to batch this (internal to StudyTypeRobot)
-                study_type_predictions, is_clinical = STUDY_TYPE_BOT.annotate(abstract, title)
-                annotation['study_type'] = study_type_predictions
-                annotation['is_clinical'] = is_clinical
-                results.append(annotation)
+        if _validate_length(body['title'], body['abstract']):
+            results = _get_pico_for_tiab(body['title'], body['abstract'])
         else:
             return jsonify({
                 "message": "'abstract' and 'title' must be lists of equal length, less than or equal to %d" % (MAX_REQUEST_SIZE,)
             }), 400
     elif 'full_text' in body:
-        if validate_length(body['full_text']):
+        if _validate_length(body['full_text']):
             for text in body['full_text']:
                 results.append(PICO_TEXT_BOT.annotate(text))
         else:
