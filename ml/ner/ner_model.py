@@ -154,44 +154,21 @@ class NERModel(BaseModel):
             pred = tf.matmul(output, W) + b
             self.logits = tf.reshape(pred, [-1, nsteps, self.config.ntags])
 
-    def add_pred_op(self):
-        """Defines self.labels_pred
-
-        This op is defined only in the case where we don't use a CRF since in
-        that case we can make the prediction "in the graph" (thanks to tf
-        functions in other words). With theCRF, as the inference is coded
-        in python and not in pure tensroflow, we have to make the prediciton
-        outside the graph.
-        """
-        if not self.config.use_crf:
-            self.labels_pred = tf.cast(tf.argmax(self.logits, axis=-1), tf.int32)
-
     def add_loss_op(self):
         """Defines the loss"""
-        if self.config.use_crf:
-            log_likelihood, trans_params = tf.contrib.crf.crf_log_likelihood(self.logits, self.labels,
-                                                                             self.sequence_lengths)
-            self.trans_params = trans_params  # need to evaluate it for decoding
-            self.loss = tf.reduce_mean(-log_likelihood)
-        else:
-            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.labels)
-            mask = tf.sequence_mask(self.sequence_lengths)
-            losses = tf.boolean_mask(losses, mask)
-            self.loss = tf.reduce_mean(losses)
-
-        # for tensorboard
-        tf.summary.scalar("loss", self.loss)
+        log_likelihood, trans_params = tf.contrib.crf.crf_log_likelihood(self.logits, self.labels,
+                                                                         self.sequence_lengths)
+        self.trans_params = trans_params  # need to evaluate it for decoding
+        self.loss = tf.reduce_mean(-log_likelihood)
 
     def build(self):
         # NER specific functions
         self.add_placeholders()
         self.add_word_embeddings_op()
         self.add_logits_op()
-        self.add_pred_op()
         self.add_loss_op()
 
         # Generic functions that add training op and initialize session
-        self.add_train_op(self.config.lr_method, self.lr, self.loss, self.config.clip)
         self.initialize_session()  # now self.sess is defined and vars are init
 
     def predict_batch(self, words):
@@ -206,22 +183,17 @@ class NERModel(BaseModel):
         """
         fd, sequence_lengths = self.get_feed_dict(words, dropout=1.0)
 
-        if self.config.use_crf:
-            # get tag scores and transition params of CRF
-            viterbi_sequences = []
-            logits, trans_params = self.sess.run([self.logits, self.trans_params], feed_dict=fd)
+        # get tag scores and transition params of CRF
+        viterbi_sequences = []
+        logits, trans_params = self.sess.run([self.logits, self.trans_params], feed_dict=fd)
 
-            # iterate over the sentences because no batching in vitervi_decode
-            for logit, sequence_length in zip(logits, sequence_lengths):
-                logit = logit[:sequence_length]  # keep only the valid steps
-                viterbi_seq, viterbi_score = tf.contrib.crf.viterbi_decode(logit, trans_params)
-                viterbi_sequences += [viterbi_seq]
+        # iterate over the sentences because no batching in vitervi_decode
+        for logit, sequence_length in zip(logits, sequence_lengths):
+            logit = logit[:sequence_length]  # keep only the valid steps
+            viterbi_seq, viterbi_score = tf.contrib.crf.viterbi_decode(logit, trans_params)
+            viterbi_sequences += [viterbi_seq]
 
-            return viterbi_sequences, sequence_lengths
-
-        else:
-            labels_pred = self.sess.run(self.labels_pred, feed_dict=fd)
-            return labels_pred, sequence_lengths
+        return viterbi_sequences, sequence_lengths
 
     def predict(self, words_raw):
         """Returns list of tags

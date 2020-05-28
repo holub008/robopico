@@ -18,7 +18,6 @@ import ml.text.minimap as minimap
 import ml.text.schwartz_hearst as schwartz_hearst
 import data as rpd
 from itertools import chain
-# from bert_serving.client import BertClient
 
 
 def cleanup(spans):
@@ -54,7 +53,6 @@ class PICOSpanRobot:
         self.model.build()
 
         self.model.restore_session(os.path.join(rpd.DATA_ROOT, "pico_spans/model.weights/"))
-        # self.bert = BertClient()
 
     def annotate(self, title, abstract):
         ti = tokenizer.nlp(title)
