@@ -2,14 +2,12 @@ from flask import Flask, request, jsonify
 import os
 
 from pico.pico_span_robot import PICOSpanRobot
-from pico.pico_robot import  PICORobot
-from study_type.study_type_robot import StudyTypeRobot
+from pico.pico_robot import PICORobot
 
 app = Flask(__name__)
 
 PICO_TIAB_BOT = PICOSpanRobot()
 PICO_TEXT_BOT = PICORobot()
-STUDY_TYPE_BOT = StudyTypeRobot()
 
 # this is a guess, based on typical abstract length, of what should run in the span of a typical web request
 MAX_REQUEST_SIZE = 500
@@ -47,10 +45,6 @@ def get_pico():
         if validate_length(body['title'], body['abstract']):
             for title, abstract in zip(body["title"], body["abstract"]):
                 annotation = PICO_TIAB_BOT.annotate(abstract, title)
-                # TODO: it may be faster to batch this (internal to StudyTypeRobot)
-                study_type_predictions, is_clinical = STUDY_TYPE_BOT.annotate(abstract, title)
-                annotation['study_type'] = study_type_predictions
-                annotation['is_clinical'] = is_clinical
                 results.append(annotation)
         else:
             return jsonify({
