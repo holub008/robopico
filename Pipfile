@@ -16,3 +16,6 @@ en-core-web-sm = {file = "https://github.com/explosion/spacy-models/releases/dow
 tensorflow = "~=1.15"
 flask = "*"
 gunicorn = "*"
+
+[requires]
+python_version = "3.7"
